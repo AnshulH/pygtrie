@@ -75,11 +75,13 @@ class _Node(object):
 
     Stores value associated with the node and dictionary of children.
     """
-    __slots__ = ('children', 'value')
+    __slots__ = ('children', 'value', 'lst')
 
     def __init__(self):
         self.children = {}
         self.value = _SENTINEL
+        self.lst = list() #added a list to each node some functions may not work with this addition
+                        # added a function add_to_list and also changed _getitem_ to return both value and list
 
     def iterate(self, path, shallow, iteritems):
         """Yields all the nodes with values associated to them in the trie.
@@ -231,6 +233,7 @@ class _Node(object):
             if node.value is not _SENTINEL:
                 last_cmd = 0
                 state.append(node.value)
+                state.append(node.lst)
             stack.append(_iteritems(node.children))
 
             while True:
@@ -304,6 +307,12 @@ class Trie(_collections.MutableMapping):
         self._root = _Node()
         self._sorted = False
         self.update(*args, **kwargs)
+    
+    def add_to_list(self,key,val):
+        node, _ = self._get_node(key, create=False)
+        node.lst.append(val)
+        return node.lst
+
 
     @property
     def _iteritems(self):
@@ -684,7 +693,7 @@ class Trie(_collections.MutableMapping):
         node, _ = self._get_node(key_or_slice)
         if node.value is _SENTINEL:
             raise ShortKeyError(key_or_slice)
-        return node.value
+        return node.value,node.lst
 
     def _set(self, key, value, only_if_missing=False, clear_children=False):
         """Sets value for a given key.
